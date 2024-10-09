@@ -58,7 +58,8 @@ func main() {
 
 		// Step 1: Download and convert audio using yt-dlp
 		log.Println("Running yt-dlp to download the audio...")
-		ytDlpCmd := exec.Command("yt-dlp", request.URL, "-x", "--audio-format", "mp3", "--ffmpeg-location", "C:\\Users\\mcros\\Desktop\\webdev\\ffmpeg-master-latest-win64-gpl\\bin", "-o", filepath.Join(downloadsDir, "%(title)s.%(ext)s"))
+		ytDlpCmd := exec.Command("C:\\Users\\mcros\\myenv\\Scripts\\yt-dlp.exe", request.URL, "-x", "--audio-format", "mp3", "--ffmpeg-location", "C:\\Users\\mcros\\Desktop\\webdev\\ffmpeg-master-latest-win64-gpl\\bin", "-o", filepath.Join(downloadsDir, "%(title)s.%(ext)s"))
+
 		output, err := ytDlpCmd.CombinedOutput()
 		log.Println("yt-dlp output:", string(output))
 		if err != nil {
@@ -84,7 +85,8 @@ func main() {
 
 		// Step 2: Run Spleeter to isolate vocals
 		log.Println("Running Spleeter to isolate vocals...")
-		spleeterCmd := exec.Command("spleeter", "separate", "-o", outputDir, downloadedFile)
+		spleeterCmd := exec.Command("C:\\Users\\mcros\\myenv\\Scripts\\spleeter.exe", "separate", "-o", outputDir, downloadedFile)
+
 		output, err = spleeterCmd.CombinedOutput() // Capture output for debugging
 		log.Println("Spleeter output:", string(output))
 		if err != nil {
