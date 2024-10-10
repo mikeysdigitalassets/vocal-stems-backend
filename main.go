@@ -13,9 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// struct for incoming post request body
 type IsolateVocalsRequest struct {
-	URL string `json:"url"` // url field to hold youtube url
+	URL string `json:"url"`
 }
 
 func main() {
@@ -31,7 +30,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// POST route to handle vocal isolation
 	r.POST("/api/isolate-vocals", func(c *gin.Context) {
 		var request IsolateVocalsRequest
 
@@ -79,7 +77,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find downloaded audio file"})
 			return
 		}
-		downloadedFile := files[0] // Use the first matching .mp3 file
+		downloadedFile := files[0]
 
 		log.Println("Downloaded file:", downloadedFile)
 
@@ -87,7 +85,7 @@ func main() {
 		log.Println("Running Spleeter to isolate vocals...")
 		spleeterCmd := exec.Command("C:\\Users\\mcros\\myenv\\Scripts\\spleeter.exe", "separate", "-o", outputDir, downloadedFile)
 
-		output, err = spleeterCmd.CombinedOutput() // Capture output for debugging
+		output, err = spleeterCmd.CombinedOutput()
 		log.Println("Spleeter output:", string(output))
 		if err != nil {
 			log.Println("Spleeter error:", err.Error())
@@ -100,19 +98,28 @@ func main() {
 		}
 
 		// Step 3: Find the isolated vocals file
-		vocalsFile := filepath.Join(outputDir, strings.TrimSuffix(filepath.Base(downloadedFile), ".mp3"), "vocals.mp3")
+		baseFilename := strings.TrimSuffix(filepath.Base(downloadedFile), ".mp3")
+		vocalsFile := filepath.Join(outputDir, baseFilename, "vocals.wav")
+		instrumentalsFile := filepath.Join(outputDir, baseFilename, "accompaniment.wav")
+
 		if _, err := os.Stat(vocalsFile); os.IsNotExist(err) {
 			log.Println("Failed to find isolated vocals file.")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find isolated vocals file"})
 			return
 		}
 
-		log.Println("Vocals file:", vocalsFile)
-
-		// Provide the download link to the isolated vocals
-		c.JSON(http.StatusOK, gin.H{
-			"downloadUrl": vocalsFile,
-		})
+		// Step 4: Stream the file for download
+		downloadType := c.Query("type") // 'vocals' or 'instrumentals'
+		if downloadType == "instrumentals" {
+			c.Writer.Header().Set("Content-Disposition", "attachment; filename="+baseFilename+"_instrumentals.wav")
+			c.Writer.Header().Set("Content-Type", "audio/wav")
+			c.File(instrumentalsFile)
+		} else {
+			// Default to vocals
+			c.Writer.Header().Set("Content-Disposition", "attachment; filename="+baseFilename+"_vocals.wav")
+			c.Writer.Header().Set("Content-Type", "audio/wav")
+			c.File(vocalsFile)
+		}
 	})
 
 	r.Run(":5000")
