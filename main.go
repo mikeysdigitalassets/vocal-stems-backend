@@ -115,7 +115,7 @@ func main() {
 			c.Writer.Header().Set("Content-Type", "audio/wav")
 			c.File(instrumentalsFile)
 		} else {
-			// default to vocals
+
 			c.Writer.Header().Set("Content-Disposition", "attachment; filename="+baseFilename+"_vocals.wav")
 			c.Writer.Header().Set("Content-Type", "audio/wav")
 			c.File(vocalsFile)
